@@ -79,19 +79,20 @@ export default function ChatArea({ pendingQuery, onQueryHandled }) {
     setIsTyping(true)
     onQueryHandled()
 
-    const timer = setTimeout(() => {
-      setIsTyping(false)
-      const assistantMsg = {
-        id: nextId++,
-        role: 'assistant',
-        text: t.mockResponse,
-        sources: t.mockResponseSources,
-        confidence: t.mockConfidence,
-      }
-      setMessages(prev => [...prev, assistantMsg])
-    }, 1500)
-
-    return () => clearTimeout(timer)
+    fetch('http://127.0.0.1:8000/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: pendingQuery, language: lang }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        setIsTyping(false)
+        setMessages(prev => [...prev, { id: nextId++, role: 'assistant', text: data.answer }])
+      })
+      .catch(() => {
+        setIsTyping(false)
+        setMessages(prev => [...prev, { id: nextId++, role: 'assistant', text: t.mockResponse }])
+      })
   }, [pendingQuery])
 
   // Auto-scroll to bottom
