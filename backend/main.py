@@ -29,7 +29,11 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://mango-dune-01aeb3c0f.azurestaticapps.net",
+        "https://mango-dune-01aeb3c0f.7.azurestaticapps.net",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -80,7 +84,10 @@ def ensure_search_index():
         index_client.create_index(index)
 
 
-ensure_search_index()
+try:
+    ensure_search_index()
+except Exception as e:
+    logger.warning("Search index init failed (will retry on first request): %s", e)
 
 
 def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 100) -> list[str]:
