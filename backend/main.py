@@ -13,9 +13,17 @@ from dotenv import load_dotenv
 import PyPDF2
 import hashlib
 import io
+import logging
 import os
 
+try:
+    from language_processor import LanguageProcessor
+except ModuleNotFoundError:
+    from .language_processor import LanguageProcessor
+
 load_dotenv()
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -52,6 +60,7 @@ blob_service = BlobServiceClient.from_connection_string(
     os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 )
 blob_container = os.getenv("AZURE_STORAGE_CONTAINER")
+language_processor = LanguageProcessor()
 
 
 def ensure_search_index():
@@ -134,12 +143,19 @@ async def upload_document(file: UploadFile = File(...)):
 @app.post("/api/chat")
 def chat(request: ChatRequest):
     try:
-        # Retrieve relevant chunks from Azure AI Search
-        results = search_client.search(search_text=request.message, top=3)
+        processing_result = language_processor.process_query(request.message)
+        search_query = processing_result["processed_query"] or request.message
+        logger.info("Using search query '%s' for original message '%s'", search_query, request.message)
+
+        results = list(search_client.search(search_text=search_query, top=3))
         context_chunks = [r["content"] for r in results]
         context = "\n\n".join(context_chunks)
 
         system_prompt = "You are OpsIQ, an expert assistant for oil and gas operations."
+        if request.language == "ar":
+            system_prompt += "\nRespond in Arabic that matches the user's original wording and intent."
+        else:
+            system_prompt += "\nRespond in English that matches the user's original wording and intent."
         if context:
             system_prompt += (
                 "\n\nUse the following document excerpts to inform your answer. "
@@ -160,7 +176,8 @@ def chat(request: ChatRequest):
         return {
             "answer": response.choices[0].message.content,
             "language": request.language,
-            "sources": list({r["document_title"] for r in search_client.search(search_text=request.message, top=3)}),
+            "sources": list({r["document_title"] for r in results}),
+            "query_processing": processing_result,
         }
     except APIError as e:
         raise HTTPException(status_code=e.status_code, detail=str(e))

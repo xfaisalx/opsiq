@@ -55,7 +55,7 @@ function TypingIndicator({ isRTL }) {
   )
 }
 
-export default function ChatArea({ pendingQuery, onQueryHandled }) {
+export default function ChatArea({ pendingQuery, onQueryHandled, chatActive }) {
   const { lang, t, isRTL } = useLanguage()
   const [messages, setMessages] = useState(mockConversation[lang])
   const [isTyping, setIsTyping] = useState(false)
@@ -105,8 +105,24 @@ export default function ChatArea({ pendingQuery, onQueryHandled }) {
   }
 
   return (
-    <section style={{ backgroundColor: 'var(--surface-primary)', padding: '32px' }}>
-      <div style={{ maxWidth: 820, margin: '0 auto' }}>
+    <section style={{
+      backgroundColor: 'var(--surface-primary)',
+      padding: chatActive ? 0 : '32px',
+      flex: chatActive ? 1 : undefined,
+      display: chatActive ? 'flex' : undefined,
+      flexDirection: chatActive ? 'column' : undefined,
+      overflow: chatActive ? 'hidden' : undefined,
+    }}>
+      <div style={{
+        maxWidth: 820,
+        margin: '0 auto',
+        width: '100%',
+        flex: chatActive ? 1 : undefined,
+        display: chatActive ? 'flex' : undefined,
+        flexDirection: chatActive ? 'column' : undefined,
+        overflow: chatActive ? 'hidden' : undefined,
+        padding: chatActive ? '24px 32px 0' : undefined,
+      }}>
         {/* Header row */}
         <div
           style={{
@@ -150,7 +166,8 @@ export default function ChatArea({ pendingQuery, onQueryHandled }) {
         {/* Scrollable message container */}
         <div
           style={{
-            maxHeight: 420,
+            flex: chatActive ? 1 : undefined,
+            maxHeight: chatActive ? undefined : 420,
             overflowY: 'auto',
             paddingRight: isRTL ? 0 : 4,
             paddingLeft: isRTL ? 4 : 0,
