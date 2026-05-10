@@ -79,7 +79,7 @@ export default function ChatArea({ pendingQuery, onQueryHandled, chatActive }) {
     setIsTyping(true)
     onQueryHandled()
 
-    fetch('http://127.0.0.1:8000/api/chat', {
+    fetch('https://opsiq-api.azurewebsites.net/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: pendingQuery, language: lang }),
