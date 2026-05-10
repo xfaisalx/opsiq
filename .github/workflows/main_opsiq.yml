@@ -71,6 +71,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'opsiq-fsa2esg4ftdfagh5'
+          app-name: 'opsiq'
           slot-name: 'Production'
           startup-command: 'uvicorn main:app --host 0.0.0.0 --port 8000'
